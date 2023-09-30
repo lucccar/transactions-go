@@ -68,3 +68,39 @@ func Test_getExchangeRate(t *testing.T) {
 		})
 	}
 }
+
+func Test_urlBuilder(t *testing.T) {
+	mockTime1 := time.Date(2023, 8, 13, 0, 0, 0, 0, time.Local)
+	mockCurrrency1 := "Real"
+
+	mockTime2 := time.Date(1995, 8, 13, 0, 0, 0, 0, time.Local)
+	mockCurrrency2 := "Euro"
+
+	type args struct {
+		date           *time.Time
+		targetCurrency *string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "teste1",
+			args: args{date: &mockTime1, targetCurrency: &mockCurrrency1},
+			want: "filter=currency:eq:Real,record_date:gt:2023-02-13,record_date:lt:2023-08-13&sort=-record_date",
+		},
+		{
+			name: "teste2",
+			args: args{date: &mockTime2, targetCurrency: &mockCurrrency2},
+			want: "filter=currency:eq:Euro,record_date:gt:1995-02-13,record_date:lt:1995-08-13&sort=-record_date",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := urlBuilder(tt.args.date, tt.args.targetCurrency); got != tt.want {
+				t.Errorf("urlBuilder() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
