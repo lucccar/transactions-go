@@ -1,8 +1,8 @@
 build:
-	@go build -o bin/app
+	@go build -o bin/ -v ./...
 
 run: build
-	@./bin/app
+	@./bin/src.exe
 
 test:
 	@go test -v ./...

@@ -3,35 +3,28 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"time"
 
-	i "app/initialize"
+	"app/dao"
 
 	"github.com/gin-gonic/gin"
-
-	// Use the appropriate driver for your database
-	"gorm.io/gorm"
-
 	_ "github.com/lib/pq"
 )
 
-var db *gorm.DB
-
-type PurchaseTransaction struct {
-	ID                string    `json:"id"`
-	Description       string    `json:"description"`
-	TransactionDate   time.Time `json:"transaction_date"`
-	PurchaseAmountUSD float64   `json:"purchase_amount_usd"`
-	ExchangeRate      float64   `json:"exchange_rate"`
-	PurchaseAmount    float64   `json:"purchase_amount"`
-}
+var ds *dao.DataStore
+var err error
 
 func main() {
 	// Initialize the database connection
-	i.InitDB()
+	ds, err = dao.InitDB()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 	defer func() {
-		dbInstance, _ := db.DB()
+		dbInstance, _ := ds.GetDB().DB()
 		_ = dbInstance.Close()
 	}()
 
@@ -43,72 +36,72 @@ func main() {
 	// Start the server
 	port := ":8080"
 	fmt.Printf("Server listening on %s\n", port)
-	if err := router.Run(port); err != nil {
+	if err = router.Run(port); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func storePurchase(c *gin.Context) {
-	// Parse request body into your model struct (e.g., YourDataModel)
-	var purchaseRequest PurchaseTransaction
+
+	var purchaseRequest TransactionRequest
 	if err := c.ShouldBindJSON(&purchaseRequest); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Create a new record in the database
-	if result := db.Create(&purchaseRequest); result.Error != nil {
-		c.JSON(400, gin.H{"error": result.Error.Error()})
+	date, err := time.Parse(dateLayout, purchaseRequest.TransactionDate)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	purchase := dao.Purchase{
+		TransactionDate:   date,
+		Description:       purchaseRequest.Description,
+		PurchaseAmountUSD: purchaseRequest.PurchaseAmount,
+	}
+	fmt.Printf("%+v", purchase)
+	createdID, err2 := ds.CreateRecord(&purchase)
+
+	if err2 != nil {
+		c.JSON(400, gin.H{"error": err2.Error()})
 		return
 	}
 
-	// Respond with the created record
-	c.JSON(201, purchaseRequest)
+	c.JSON(201, createdID)
 }
 
 func retrievePurchase(c *gin.Context) {
-	// Retrieve a record by ID
-	id := c.Param("id")
-	targetCurrency := c.Param("currency")
+	var retrieveRequest RetrieveRequest
 
-	// retrievedRecord, err := db.RetrieveRecordByID(id)
-	// Fetch the purchase from the database by ID
-	var purchase i.Purchase
-	if retrievedRecord := db.Where("id = ?", id).First(&purchase); retrievedRecord.Error != nil {
+	if err := c.ShouldBindJSON(&retrieveRequest); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	retrievedRecord, err2 := ds.RetrieveRecordByID(retrieveRequest.ID)
+	if err2 != nil {
 		c.JSON(404, gin.H{"error": "Record not found"})
 		return
 	}
 
-	// Fetch the exchange rate for the purchase date from the Treasury API
-	exchangeRate, err := getExchangeRate(purchase.TransactionDate, targetCurrency)
+	exchangeRate, err := getExchangeRate(retrievedRecord.TransactionDate, retrieveRequest.Currency)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Calculate the converted purchase amount
-	convertedAmount := purchase.PurchaseAmountUSD * exchangeRate
-	purchaseID := strconv.FormatUint(uint64(purchase.ID), 10)
-	// Create a response object
+	convertedAmount := retrievedRecord.PurchaseAmountUSD * exchangeRate
+	ratio := math.Pow(10, float64(2))
+	convertedAmount = math.Floor(convertedAmount*ratio) / ratio
+
+	purchaseID := strconv.FormatUint(uint64(retrievedRecord.ID), 10)
 	convertedRecord := PurchaseTransaction{
 		ID:                purchaseID,
-		Description:       purchase.Description,
-		TransactionDate:   purchase.TransactionDate,
-		PurchaseAmountUSD: purchase.PurchaseAmountUSD,
+		Description:       retrievedRecord.Description,
+		TransactionDate:   retrievedRecord.TransactionDate,
+		PurchaseAmountUSD: retrievedRecord.PurchaseAmountUSD,
 		ExchangeRate:      exchangeRate,
 		PurchaseAmount:    convertedAmount,
 	}
 
-	// Respond with the retrieved record
 	c.JSON(200, convertedRecord)
-}
-
-func getExchangeRate(date time.Time, targetCurrency string) (float64, error) {
-	// Implement fetching exchange rate from Treasury API based on date and targetCurrency
-	// You should make an HTTP request to the Treasury API and parse the response JSON here.
-	// Ensure the rate is within the last 6 months or return an error if not found.
-	// Return the exchange rate as a float64.
-	// Handle any potential errors during the process.
-	// Here, we assume the exchange rate is fetched successfully.
-	return 1.0, nil
 }
