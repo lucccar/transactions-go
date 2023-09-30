@@ -5,12 +5,17 @@ go 1.20
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/lib/pq v1.10.9
+	github.com/stretchr/testify v1.8.3
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.4
 )
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+)
+
+require (
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
