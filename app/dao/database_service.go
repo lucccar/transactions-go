@@ -31,9 +31,9 @@ func (ds *DataStore) CreateRecord(record *Purchase) (uint, error) {
 	return record.ID, nil
 }
 
-func (ds *DataStore) RetrieveRecordByID(id uint) (*Purchase, error) {
+func (ds *DataStore) RetrieveRecordByID(id *uint) (*Purchase, error) {
 	var purchase Purchase
-	if retrievedRecord := ds.db.Where("ID = ?", id).First(&purchase); retrievedRecord.Error != nil {
+	if retrievedRecord := ds.db.Where("ID = ?", *id).First(&purchase); retrievedRecord.Error != nil {
 		return nil, retrievedRecord.Error
 	}
 

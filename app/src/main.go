@@ -10,6 +10,7 @@ import (
 	"app/dao"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -17,7 +18,12 @@ var ds *dao.DataStore
 var err error
 
 func main() {
-	// Initialize the database connection
+
+	err = godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Some error occured. Err: %s", err)
+	}
+
 	ds, err = dao.InitDB()
 	if err != nil {
 		log.Fatal(err)
@@ -77,13 +83,13 @@ func retrievePurchase(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	retrievedRecord, err2 := ds.RetrieveRecordByID(retrieveRequest.ID)
+	retrievedRecord, err2 := ds.RetrieveRecordByID(&retrieveRequest.ID)
 	if err2 != nil {
 		c.JSON(404, gin.H{"error": "Record not found"})
 		return
 	}
 
-	exchangeRate, err := getExchangeRate(retrievedRecord.TransactionDate, retrieveRequest.Currency)
+	exchangeRate, err := getExchangeRate(&retrievedRecord.TransactionDate, &retrieveRequest.Currency)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return

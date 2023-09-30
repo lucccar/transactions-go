@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -30,7 +31,7 @@ type TreasuryData struct {
 	Data []ExchangeData `json:data`
 }
 
-func getExchangeRate(date time.Time, targetCurrency string) (float64, error) {
+func getExchangeRate(date *time.Time, targetCurrency *string) (float64, error) {
 	var treasuryData TreasuryData
 
 	apiURL := urlBuilder(date, targetCurrency)
@@ -60,7 +61,7 @@ func getExchangeRate(date time.Time, targetCurrency string) (float64, error) {
 	}
 	var exchangeRate float64
 	for _, currency := range treasuryData.Data {
-		if currency.Currency == targetCurrency {
+		if currency.Currency == *targetCurrency {
 			exchangeRate, err = strconv.ParseFloat(currency.Exchange_rate, 64)
 			if err != nil {
 				log.Fatal(err)
@@ -72,16 +73,16 @@ func getExchangeRate(date time.Time, targetCurrency string) (float64, error) {
 	return exchangeRate, nil
 }
 
-func urlBuilder(date time.Time, targetCurrency string) string {
+func urlBuilder(date *time.Time, targetCurrency *string) string {
 
-	currencyFilter := fmt.Sprintf("%s%s", "filter=currency:eq:", targetCurrency)
+	currencyFilter := fmt.Sprintf("%s%s", "filter=currency:eq:", *targetCurrency)
 	ltFilter := fmt.Sprintf("%s%s", ",record_date:lt:", date.Format("2006-01-02"))
 
 	gtFilter := fmt.Sprintf("%s%s", ",record_date:gt:", date.AddDate(0, -6, 0).Format("2006-01-02"))
 
 	sortParam := "&sort=-record_date"
 
-	baseURL := "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange?"
+	baseURL := os.Getenv("EXCHANGE_BASE_URL")
 
 	return fmt.Sprintf("%s%s%s%s%s", baseURL, currencyFilter, gtFilter, ltFilter, sortParam)
 }
