@@ -1,7 +1,7 @@
 package dao
 
 const (
-	dbHost     = "localhost"
+	dbHost     = "db"
 	dbPort     = 5432
 	dbUser     = "postgres"
 	dbPassword = "carvalho"

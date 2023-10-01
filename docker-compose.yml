@@ -2,7 +2,7 @@ version: "3"
 services:
     go-app:
         build:
-            context: ./app
+            dockerfile: ./app/Dockerfile
         ports:
             - "8080:8080"
         depends_on:
@@ -10,9 +10,9 @@ services:
     db:
         image: postgres:latest
         environment:
-            POSTGRES_DB: mydb
-            POSTGRES_USER: myuser
-            POSTGRES_PASSWORD: mypassword
+            POSTGRES_DB: exchanegdb
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: carvalho
         ports:
             - "5432:5432"
         volumes:

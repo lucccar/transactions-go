@@ -1,9 +1,15 @@
 FROM golang:latest
+USER root
 
-WORKDIR /app
-COPY . .
+COPY . $GOPATH/src/transactions
+WORKDIR $GOPATH/src/transactions/app
 
-RUN go get -d -v ./...
-RUN go install -v ./...
+RUN go mod tidy
 
-CMD ["app"]
+RUN GOOS=linux GOARCH=amd64 go build -o ./bin/ -v ./...
+RUN chmod -R 777 ./bin
+RUN chmod -R 777 ./bin/src
+
+EXPOSE 8080
+
+CMD ["./bin/src"]
