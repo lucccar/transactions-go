@@ -88,12 +88,12 @@ func Test_urlBuilder(t *testing.T) {
 		{
 			name: "teste1",
 			args: args{date: &mockTime1, targetCurrency: &mockCurrrency1},
-			want: "filter=currency:eq:Real,record_date:gt:2023-02-13,record_date:lt:2023-08-13&sort=-record_date",
+			want: "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange?filter=currency:eq:Real,record_date:gt:2023-02-13,record_date:lt:2023-08-13&sort=-record_date",
 		},
 		{
 			name: "teste2",
 			args: args{date: &mockTime2, targetCurrency: &mockCurrrency2},
-			want: "filter=currency:eq:Euro,record_date:gt:1995-02-13,record_date:lt:1995-08-13&sort=-record_date",
+			want: "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange?filter=currency:eq:Euro,record_date:gt:1995-02-13,record_date:lt:1995-08-13&sort=-record_date",
 		},
 	}
 	for _, tt := range tests {
